@@ -6,35 +6,33 @@ import os
 import modules.directory
 import modules.message
 
-def build():
-    # os.makedirs(os.path.join("dist","stylesheets"), exist_ok=True)
+def build(): 
+    os.makedirs("./dist/stylesheets", exist_ok=True)
     files = glob.glob("./assets/stylesheets/**", recursive=True)
-    re_scss_file_path = re.compile(r".\/assets\/stylesheets\/(.*).scss")
-    for file_name in files:
-        if re_scss_file_path.fullmatch(file_name):
-            print(os.path.join("dist","stylesheets",f"{re_scss_file_path.match(file_name).group(1)}.css"))
-            with open(file_name, "r") as f:
+    re_scss_file_path = re.compile(r".\/assets\/stylesheets\/.*.scss")
+    for scss_file in files:
+        if re_scss_file_path.fullmatch(scss_file):
+            with open(scss_file, "r") as f:
+                NEW_CSS_FILE_PATH = scss_file.replace("./assets/stylesheets","")
+                if NEW_CSS_FILE_PATH.count("/") >= 2:
+                    os.makedirs(f"./dist/stylesheets{os.path.dirname(NEW_CSS_FILE_PATH)}",exist_ok=True)
+                
                 try:
                     css_code = sass.compile(string = f.read(), output_style='compressed')
-                    print(css_code)
-                    modules.directory.new(os.path.join("dist","stylesheets",f"{re_scss_file_path.match(file_name).group(1)}.css"))
-                    # with open(os.path.join("dist","stylesheets",f"{re_scss_file_path.match(file_name).group(1)}.css"),"w") as css_file:
-                    #     f.write(css_code)
+                    with open(f"./dist/stylesheets{NEW_CSS_FILE_PATH[:-5]}.css","w") as css_file:
+                        css_file.write(css_code)
                 except sass.CompileError:
-                    pass
+                    print("error")
 
                 
                 
             
 def main():
-    try:
-        PROCESS_NAME: str = sys.argv[1]
-        if PROCESS_NAME == "build":
-            build()
-        else:
-            modules.message.error(f"Could not find PROCESS NAME \"{PROCESS_NAME}\"")
-    except IndexError:
-        modules.message.error("No argument is specified.")
+    PROCESS_NAME: str = sys.argv[1]
+    if PROCESS_NAME == "build":
+        build()
+    else:
+        modules.message.error(f"Could not find PROCESS NAME \"{PROCESS_NAME}\"")
 
 if __name__ == "__main__":
     main()
