@@ -3,10 +3,16 @@ import glob
 import re
 import sass
 import os
-import modules.directory
 import modules.message
+import time
 
 def build(): 
+    if os.path.exists(".LASTBUILD"): 
+        with open(".LASTBUILD") as f:
+            LASTBUILD = float(f.read())
+    else:
+        LASTBUILD = 0.0
+    print(LASTBUILD)
     os.makedirs("./dist/stylesheets", exist_ok=True)
     files = glob.glob("./assets/stylesheets/**", recursive=True)
     re_scss_file_path = re.compile(r".\/assets\/stylesheets\/.*.scss")
@@ -16,13 +22,16 @@ def build():
                 NEW_CSS_FILE_PATH = scss_file.replace("./assets/stylesheets","")
                 if NEW_CSS_FILE_PATH.count("/") >= 2:
                     os.makedirs(f"./dist/stylesheets{os.path.dirname(NEW_CSS_FILE_PATH)}",exist_ok=True)
-                
                 try:
                     css_code = sass.compile(string = f.read(), output_style='compressed')
                     with open(f"./dist/stylesheets{NEW_CSS_FILE_PATH[:-5]}.css","w") as css_file:
                         css_file.write(css_code)
                 except sass.CompileError:
-                    print("error")
+                    with open(f"./dist/stylesheets{NEW_CSS_FILE_PATH[:-5]}.css","w") as css_file:
+                        css_file.write("")
+
+    with open(".LASTBUILD","w") as f:
+        f.write(str(time.time()))
 
                 
                 
