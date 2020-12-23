@@ -10,7 +10,7 @@ setup(
     install_requires=install_requirements,
     entry_points={
         "console_scripts": [
-            "spiderlog=src.core:main",
+            "spiderlog=core:main",
         ]
     },
     classifiers=[

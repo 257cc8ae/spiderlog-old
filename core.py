@@ -4,6 +4,7 @@ import re
 import sass
 import os
 import time
+import modules.new
 
 
 def error(text):
@@ -54,12 +55,10 @@ def warn(text):
 #     with open(".LASTBUILD", "w") as f:
 #         f.write(str(time.time()))
 
-
 def main():
     PROCESS_NAME: str = sys.argv[1]
-    if PROCESS_NAME == "build":
-        # build()
-        print("build")
+    if PROCESS_NAME == "new":
+        modules.new.main()
     else:
         error(f"Could not find PROCESS NAME \"{PROCESS_NAME}\"")
 
