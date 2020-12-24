@@ -22,6 +22,18 @@ pip3 install -e .
 pip install -e .
 ```
 
+### Confirm installed SpiderLog
+
+``` bash
+spiderlog --version
+```
+
+or 
+
+``` bash
+spiderlog -v
+```
+
 ## How to use
 
 ### Create a new SpiderLog project
