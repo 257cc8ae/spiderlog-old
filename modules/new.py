@@ -21,6 +21,8 @@ def main():
             modules.message.error(
                 "Naming error (Intentional termination by you)")
             sys.exit()
+    os.makedirs(PROJECT_NAME,exist_ok=True)
+    os.chdir(PROJECT_NAME)
     stylesheet_type = input(
         "Which stylesheet types do you use, CSS or SCSS or SASS?:")
     while not stylesheet_type.upper() in ["CSS", "SCSS", "SASS"]:
@@ -32,8 +34,14 @@ def main():
     if modules.verification_values.yes_or_no(using_git):
         try:
             subprocess.check_call("git --version", shell=True)
+            subprocess.call("git init",shell=True)
         except subprocess.CalledProcessError:
             modules.message.error("Git is not installed.")
             modules.message.message("Please check how to install git. https://git-scm.com/download")
-    os.makedirs(f"{PROJECT_NAME}/assets/{stylesheet_type}", exist_ok=True)
+    os.makedirs(f"assets/{stylesheet_type.lower()}", exist_ok=True)
+    os.makedirs("assets/images", exist_ok=True)
+    os.makedirs("assets/javascripts", exist_ok=True)
+    os.makedirs("static", exist_ok=True)
+    os.makedirs("pages", exist_ok=True)
+    os.makedirs("layout", exist_ok=True)
     modules.message.success("Finished making your new project.")
