@@ -8,3 +8,6 @@ def success(text):
 
 def warn(text):
     print(f"\033[33m\033[1mWARN\033[0m {text}")
+
+def message(text):
+    print(f"\033[34m\033[1mMESSAGE\033[0m {text}")
