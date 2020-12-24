@@ -28,12 +28,15 @@ def compileStyleSheets(LASTBUILD,file_format):
                 print(e)
 
 def conversionImageToWebp(LASTBUILD):
+    modules.message.message("Conversion images to webp format...")
     images = glob.glob("./assets/images/**",recursive=True)
     images_format = [".bmp",".jpg",".jpeg",".png"]
     for image_file in images:
         if os.path.splitext(image_file)[-1].lower() in images_format:
             img = Image.open(image_file)
             img.save(image_file + '.webp', "WEBP")
+            modules.message.success(f"{image_file} conversioned to webp")
+    modules.message.success("All images conversioned to webp format")
 
 
 def main():
