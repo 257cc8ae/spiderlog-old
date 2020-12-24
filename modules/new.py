@@ -4,12 +4,14 @@ import modules.message
 import modules.verification_values
 import shutil
 import subprocess
+import yaml
 
 def main():
     try:
         PROJECT_NAME = sys.argv[2]
     except IndexError:
         PROJECT_NAME = input("Input your project name:")
+    description = input("Description this project:")
     if os.path.exists(PROJECT_NAME):
         modules.message.warn(
             f"Directory name is \"{PROJECT_NAME}\" with the same name directory exists.")
@@ -35,6 +37,9 @@ def main():
         try:
             subprocess.check_call("git --version", shell=True)
             subprocess.call("git init",shell=True)
+            git_remote_url = input("Input your git remote repository url (If you do not have it,please input \"none\"):")
+            if git_remote_url.lower() != "none":
+                subprocess.call(f"git remote add origin {git_remote_url}", shell=True)
         except subprocess.CalledProcessError:
             modules.message.error("Git is not installed.")
             modules.message.message("Please check how to install git. https://git-scm.com/download")
@@ -44,4 +49,11 @@ def main():
     os.makedirs("static", exist_ok=True)
     os.makedirs("pages", exist_ok=True)
     os.makedirs("layout", exist_ok=True)
+    configuration = {
+        "version": "0.0.1",
+        "name": PROJECT_NAME,
+        "description": description,
+    }
+    with open("spiderlog.yml", "w") as f:
+        f.write(yaml.dump(configuration))
     modules.message.success("Finished making your new project.")
