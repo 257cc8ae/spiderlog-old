@@ -42,7 +42,7 @@ def main():
         except subprocess.CalledProcessError:
             modules.message.error("Git is not installed.")
             modules.message.message("Please check how to install git. https://git-scm.com/download")
-    os.makedirs(f"assets/{stylesheet_type.lower()}", exist_ok=True)
+    os.makedirs("assets/stylesheets", exist_ok=True)
     os.makedirs("assets/images", exist_ok=True)
     os.makedirs("assets/javascripts", exist_ok=True)
     os.makedirs("static", exist_ok=True)
@@ -51,8 +51,8 @@ def main():
     configuration = {
         "version": "0.0.1",
         "name": PROJECT_NAME,
-        "stylesheets_type": stylesheet_type,
+        "stylesheets_file_format": stylesheet_type.lower(),
     }
-    with open("sl.json", "w") as f:
+    with open("sl.json", "w",encoding="utf-8") as f:
         json.dump(configuration, f)
     modules.message.success("Finished making your new project.")
