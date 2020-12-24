@@ -4,6 +4,7 @@ import json
 import glob
 import sass
 import sys
+from PIL import Image
 
 def compileStyleSheets(LASTBUILD,file_format):
     modules.message.message(f"Stylesheet files format = {file_format}")
@@ -25,22 +26,15 @@ def compileStyleSheets(LASTBUILD,file_format):
             except sass.CompileError as e:
                 modules.message.error(f"{file_format} copmile error")
                 print(e)
-                # NEW_CSS_FILE_PATH = stylesheet_file.replace(
-                #     "./assets/stylesheets", "")
-                # if NEW_CSS_FILE_PATH.count("/") >= 2:
-                #     os.makedirs(
-                #         f"./dist/stylesheets{os.path.dirname(NEW_CSS_FILE_PATH)}", exist_ok=True)
-                # try:
-                #     css_code = sass.compile(
-                #         string=f.read(), output_style='compressed')
-                #     with open(f"./dist/stylesheets{NEW_CSS_FILE_PATH[:-5]}.css", "w") as css_file:
-                #         css_file.write(css_code)
-                # except sass.CompileError:
-                #     with open(f"./dist/stylesheets{NEW_CSS_FILE_PATH[:-5]}.css", "w") as css_file:
-                #         css_file.write("")
-                #     modules.message.warn(
-                #         f"There was a problem with the compilation of SCSS.")
-                #     modules.message.success(f"{stylesheet_file} is compiled.")
+
+def conversionImageToWebp(LASTBUILD):
+    images = glob.glob("./assets/images/**",recursive=True)
+    images_format = [".bmp",".jpg",".jpeg",".png"]
+    for image_file in images:
+        if os.path.splitext(image_file)[-1].lower() in images_format:
+            img = Image.open(image_file)
+            img.save(image_file + '.webp', "WEBP")
+
 
 def main():
     try:
@@ -51,3 +45,4 @@ def main():
         modules.message.error("This is not the SpiderLog directory.")
         sys.exit()
     compileStyleSheets(0.0, configuration["stylesheets_file_format"])   
+    conversionImageToWebp(0.0)
