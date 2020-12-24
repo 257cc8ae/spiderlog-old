@@ -4,14 +4,13 @@ import modules.message
 import modules.verification_values
 import shutil
 import subprocess
-import yaml
+import json
 
 def main():
     try:
         PROJECT_NAME = sys.argv[2]
     except IndexError:
         PROJECT_NAME = input("Input your project name:")
-    description = input("Description this project:")
     if os.path.exists(PROJECT_NAME):
         modules.message.warn(
             f"Directory name is \"{PROJECT_NAME}\" with the same name directory exists.")
@@ -52,8 +51,8 @@ def main():
     configuration = {
         "version": "0.0.1",
         "name": PROJECT_NAME,
-        "description": description,
+        "stylesheets_type": stylesheet_type,
     }
-    with open("spiderlog.yml", "w") as f:
-        f.write(yaml.dump(configuration))
+    with open("sl.json", "w") as f:
+        json.dump(configuration, f)
     modules.message.success("Finished making your new project.")
