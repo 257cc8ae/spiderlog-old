@@ -52,6 +52,10 @@ def main():
         "version": "0.0.1",
         "name": PROJECT_NAME,
         "stylesheets_file_format": stylesheet_type.lower(),
+        "img_compile": {
+            "quality": 60,
+            "width": 800,
+        }
     }
     with open("sl.json", "w",encoding="utf-8") as f:
         json.dump(configuration, f)

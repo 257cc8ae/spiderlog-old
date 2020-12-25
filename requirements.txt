@@ -1,1 +1,2 @@
 libsass==0.20.1
+Pillow==7.0.0

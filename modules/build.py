@@ -35,7 +35,10 @@ def conversionImageToWebp(LASTBUILD):
     for image_file in images:
         if os.path.splitext(image_file)[-1].lower() in images_format:
             img = Image.open(image_file)
-            img.save(f"./dist/images/{os.path.basename(image_file)}.webp", "WEBP")
+            if img.width > 800:
+                img = img.resize((800,int(800 * img.height / img.width)))
+            img.save(f"./dist/images/{os.path.basename(image_file)}",quality=60)
+            img.save(f"./dist/images/{os.path.basename(image_file)}.webp",quality=60)
             modules.message.success(f"{image_file} conversioned to webp")
     modules.message.success("All images conversioned to webp format")
 
