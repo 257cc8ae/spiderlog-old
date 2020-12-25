@@ -1,10 +1,11 @@
 import os
-import modules.message
+import shutil
 import json
 import glob
 import sass
 import sys
 from PIL import Image
+import modules.message
 
 def compileStyleSheets(LASTBUILD,file_format):
     modules.message.message(f"Stylesheet files format = {file_format}")
@@ -40,6 +41,9 @@ def conversionImageToWebp(LASTBUILD):
             img.save(f"./dist/images/{os.path.basename(image_file)}",quality=60)
             img.save(f"./dist/images/{os.path.basename(image_file)}.webp",quality=60)
             modules.message.success(f"{image_file} conversioned to webp")
+        elif os.path.isfile(image_file):
+            shutil.copy(image_file,"./dist/images")
+            modules.message.success(f"{image_file} is copy to ./dist/images")
     modules.message.success("All images conversioned to webp format")
 
 
