@@ -10,7 +10,7 @@ def compileStyleSheets(LASTBUILD,file_format):
     modules.message.message(f"Stylesheet files format = {file_format}")
     stylesheet_files = glob.glob("./assets/stylesheets/**", recursive=True)
     for stylesheet_file in stylesheet_files:
-        if os.path.splitext(stylesheet_file)[1] == f".{file_format}":
+        if os.path.splitext(stylesheet_file)[-1] == f".{file_format}":
             new_css_file_path = stylesheet_file.replace("./assets/stylesheets","")
             if new_css_file_path.count("/") >= 2:
                 os.makedirs(f"./dist/stylesheets{os.path.dirname(new_css_file_path)}", exist_ok=True)
@@ -28,13 +28,14 @@ def compileStyleSheets(LASTBUILD,file_format):
                 print(e)
 
 def conversionImageToWebp(LASTBUILD):
+    os.makedirs("./dist/images", exist_ok=True)
     modules.message.message("Conversion images to webp format...")
     images = glob.glob("./assets/images/**",recursive=True)
     images_format = [".bmp",".jpg",".jpeg",".png"]
     for image_file in images:
         if os.path.splitext(image_file)[-1].lower() in images_format:
             img = Image.open(image_file)
-            img.save(image_file + '.webp', "WEBP")
+            img.save(f"./dist/images/{os.path.basename(image_file)}.webp", "WEBP")
             modules.message.success(f"{image_file} conversioned to webp")
     modules.message.success("All images conversioned to webp format")
 
