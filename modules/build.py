@@ -54,11 +54,29 @@ def conversionImageToWebp(LASTBUILD):
             modules.message.success(f"{image_file} is copy to ./dist/images")
     modules.message.success("All images conversioned to webp format")
 
+def imageResizerForFavicon(img,size,output):
+    new_img = img.resize((size,size))
+    new_img.save(output)
+
 def faviconGenerater():
+    output_favicon_images = {
+        "android-chrome-192x192.png": 192,
+        "android-chrome-384x384.png": 384,
+        "apple-touch-icon.png": 180,
+        "favicon.ico": 48,
+        "favicon-32x32.png": 32,
+        "mstile-150x150.png": 150,
+    }
     if os.path.isfile("./static/favicon.png"):
         img = Image.open("./static/favicon.png")
-        if img.width != img.height:
+        if img.width == img.height and img.width >= 260:
+            for favicon_image_file_name in output_favicon_images:
+                imageResizerForFavicon(img,output_favicon_images[favicon_image_file_name],f"./dist/{favicon_image_file_name}")
+                modules.message.success(f"\033[1mfavicon generater: \033[0m{favicon_image_file_name} is compiled.")
+        elif img.width != img.height:
             modules.message.warn("\033[1mfavicon generater: \033[0mfavicon.png's ratio is recommendation 1:1.")
+        elif img.width >= 260:
+            modules.message.warn("\033[1mfavicon generater: \033[0mYour image should be 260x260 or more for optimal results.")
     else:
         modules.message.warn("\033[1mfavicon generater: \033[0mNot found ./static/favicon.png")
 
