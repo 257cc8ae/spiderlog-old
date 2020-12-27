@@ -54,7 +54,7 @@ def main():
         "pages",
         "layouts",
         "components",
-        "config",
+        "config/pages",
     ]
     for new_directory in new_directories:
         os.makedirs(new_directory, exist_ok=True)
