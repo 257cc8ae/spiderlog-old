@@ -52,7 +52,7 @@ def main():
         "version": "0.0.1",
         "name": PROJECT_NAME,
         "stylesheets_file_format": stylesheet_type.lower(),
-        "img_compile": {
+        "image_compressor": {
             "quality": 60,
             "width": 800,
         }
