@@ -55,6 +55,9 @@ def main():
         "image_compressor": {
             "quality": 60,
             "width": 800,
+        },
+        "favicon_generater": {
+            "path": "./static/favicon.png"
         }
     }
     with open("sl.json", "w",encoding="utf-8") as f:

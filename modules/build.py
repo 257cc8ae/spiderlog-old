@@ -73,8 +73,7 @@ def imageResizerForFavicon(img, size, output):
     new_img.save(output)
 
 
-def faviconGenerater(lastbuild):
-    path = "./static/favicon.png"
+def faviconGenerater(lastbuild,path):
     output_favicon_images = {
         "android-chrome-192x192.png": 192,
         "android-chrome-384x384.png": 384,
@@ -116,6 +115,6 @@ def main():
     compileStyleSheets(lastbuild, configuration["stylesheets_file_format"])
     imageCompressor(lastbuild, configuration["image_compressor"]
                     ["width"], configuration["image_compressor"]["quality"])
-    faviconGenerater(lastbuild)
+    faviconGenerater(lastbuild,configuration["favicon_generater"]["path"])
     with open(".lastbuild", "w") as f:
         f.write(str(time.time()))
