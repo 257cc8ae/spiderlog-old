@@ -6,8 +6,9 @@ import sass
 import sys
 import time
 from PIL import Image
+import markdown
+import minify_html
 import modules.message
-
 
 def isFileNewer(lastbuild, path):
     if os.stat(path).st_mtime >= lastbuild:
@@ -50,7 +51,7 @@ def imageCompressor(lastbuild, width, quality):
     images = glob.glob("./assets/images/**", recursive=True)
     images_format = [".bmp", ".jpg", ".jpeg", ".png"]
     for image_file in images:
-        if os.path.splitext(image_file)[-1].lower() in images_format and isFileNewer(lastbuild,image_file):
+        if os.path.splitext(image_file)[-1].lower() in images_format and isFileNewer(lastbuild, image_file):
             img = Image.open(image_file)
             if img.width > width:
                 img = img.resize((width, int(width * img.height / img.width)))
@@ -60,7 +61,7 @@ def imageCompressor(lastbuild, width, quality):
                 f"./dist/images/{os.path.basename(image_file)}.webp", quality=quality)
             modules.message.success(
                 f"\033[1mimage compressor:  \033[0m{image_file} conversioned to webp")
-        elif os.path.isfile(image_file) and isFileNewer(lastbuild,image_file):
+        elif os.path.isfile(image_file) and isFileNewer(lastbuild, image_file):
             shutil.copy(image_file, "./dist/images")
             modules.message.success(
                 f"\033[1mimage compressor:  \033[0m{image_file} is copy to ./dist/images")
@@ -73,7 +74,7 @@ def imageResizerForFavicon(img, size, output):
     new_img.save(output)
 
 
-def faviconGenerater(lastbuild,path):
+def faviconGenerater(lastbuild, path):
     output_favicon_images = {
         "android-chrome-192x192.png": 192,
         "android-chrome-384x384.png": 384,
@@ -102,6 +103,36 @@ def faviconGenerater(lastbuild,path):
             f"\033[1mfavicon generater: \033[0mNot found {path}")
 
 
+def page_builder():
+    pages = glob.glob("./pages/**", recursive=True)
+    markdown_extensions = [".md",".markdown"]
+    html_extensions = [".html",".htm"]
+    md = markdown.Markdown()
+    for page in pages:
+        if os.path.isfile(page) and os.path.splitext(page)[-1] in markdown_extensions:
+            dirname, basename = os.path.split(page)
+            dirname = dirname.replace("./pages","")
+            os.makedirs(f"./dist{dirname}",exist_ok=True)
+            with open(page,"r") as markdown_file:
+                with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html","w") as parsed_html_file:
+                    try:
+                        parsed_html_file.write(minify_html.minify(md.convert(markdown_file.read()), minify_js=True))
+                        modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
+                    except SyntaxError:
+                        modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
+                        parsed_html_file.write(md.convert(markdown_file.read()))
+        elif os.path.isfile(page) and os.path.splitext(page)[-1] in html_extensions:
+            dirname, basename = os.path.split(page)
+            dirname = dirname.replace("./pages","")
+            os.makedirs(f"./dist{dirname}",exist_ok=True)
+            with open(page,"r") as html_file:
+                with open(f"./dist{dirname}/{basename}","w") as parsed_html:
+                    try:
+                        parsed_html.write(minify_html.minify(md.convert(html_file.read()),minify_js=True))
+                        modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
+                    except SyntaxError:
+                        modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
+                        parsed_html.write(md.convert(html_file.read()))
 def main():
     with open(".lastbuild", "r") as f:
         lastbuild = float(f.read())
@@ -115,6 +146,7 @@ def main():
     compileStyleSheets(lastbuild, configuration["stylesheets_file_format"])
     imageCompressor(lastbuild, configuration["image_compressor"]
                     ["width"], configuration["image_compressor"]["quality"])
-    faviconGenerater(lastbuild,configuration["favicon_generater"]["path"])
+    faviconGenerater(lastbuild, configuration["favicon_generater"]["path"])
+    page_builder()
     with open(".lastbuild", "w") as f:
         f.write(str(time.time()))
