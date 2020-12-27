@@ -103,8 +103,11 @@ def faviconGenerater(lastbuild, path):
         modules.message.warn(
             f"\033[1mfavicon generater: \033[0mNot found {path}")
 
-def render():
-    pass
+def render(name,data={}):
+    env = Environment(loader=FileSystemLoader('.'))
+    env.globals['render'] = render
+    template = env.get_template(f"./components/{name}.html.j2")
+    return template.render(data)
 
 def generateLayout():
     env = Environment(loader=FileSystemLoader('.'))
@@ -116,7 +119,6 @@ def generateLayout():
     }
 
     rendered = template.render(data)
-
     print(str(rendered))
 
 def page_builder():
