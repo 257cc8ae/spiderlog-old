@@ -7,7 +7,7 @@ import sys
 import time
 from PIL import Image
 import markdown
-import minify_html
+from css_html_js_minify import html_minify, js_minify, css_minify
 import modules.message
 
 def isFileNewer(lastbuild, path):
@@ -116,7 +116,7 @@ def page_builder():
             with open(page,"r") as markdown_file:
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html","w") as parsed_html_file:
                     try:
-                        parsed_html_file.write(minify_html.minify(md.convert(markdown_file.read()), minify_js=True))
+                        parsed_html_file.write(html_minify(md.convert(markdown_file.read())))
                         modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
                         modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
@@ -128,11 +128,24 @@ def page_builder():
             with open(page,"r") as html_file:
                 with open(f"./dist{dirname}/{basename}","w") as parsed_html:
                     try:
-                        parsed_html.write(minify_html.minify(md.convert(html_file.read()),minify_js=True))
+                        parsed_html.write(html_minify(md.convert(html_file.read())))
                         modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
                         modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
                         parsed_html.write(md.convert(html_file.read()))
+
+def javascriptCompile():
+    js_files = glob.glob("./javascripts/**",recursive=True)
+    for js_file in js_files:
+        if os.path.isfile(js_file) and os.path.splitext(js_file)[-1] == ".js":
+            dirname, basename = os.path.split(js_file)
+            dirname = dirname.replace("./javascripts","")
+            os.makedirs(f"./dist/js{dirname}",exist_ok=True)
+            with open(js_file,"r") as javascript_file:
+                with open(f"./dist/js{dirname}/{basename}", "w") as javascript_file_minified:
+                    javascript_file_minified.write(js_minify(javascript_file.read()))
+                    modules.message.success(f"\033[1mJavaScript Minify: \033[0mminified {js_file}")
+
 def main():
     with open(".lastbuild", "r") as f:
         lastbuild = float(f.read())
@@ -148,5 +161,6 @@ def main():
                     ["width"], configuration["image_compressor"]["quality"])
     faviconGenerater(lastbuild, configuration["favicon_generater"]["path"])
     page_builder()
+    javascriptCompile()
     with open(".lastbuild", "w") as f:
         f.write(str(time.time()))

@@ -44,7 +44,7 @@ def main():
             modules.message.message("Please check how to install git. https://git-scm.com/download")
     os.makedirs("assets/stylesheets", exist_ok=True)
     os.makedirs("assets/images", exist_ok=True)
-    os.makedirs("assets/javascripts", exist_ok=True)
+    os.makedirs("javascripts", exist_ok=True)
     os.makedirs("static", exist_ok=True)
     os.makedirs("pages", exist_ok=True)
     os.makedirs("layout", exist_ok=True)

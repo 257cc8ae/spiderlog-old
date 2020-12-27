@@ -1,4 +1,4 @@
 libsass==0.20.1
 Pillow==7.0.0
 Markdown==3.3.3
-minify-html==0.3.10
+css-html-js-minify==2.5.5
