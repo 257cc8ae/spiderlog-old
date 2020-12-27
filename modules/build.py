@@ -9,6 +9,7 @@ from PIL import Image
 import markdown
 from css_html_js_minify import html_minify, js_minify, css_minify
 import modules.message
+from jinja2 import Template, Environment, FileSystemLoader
 
 def isFileNewer(lastbuild, path):
     if os.stat(path).st_mtime >= lastbuild:
@@ -102,6 +103,17 @@ def faviconGenerater(lastbuild, path):
         modules.message.warn(
             f"\033[1mfavicon generater: \033[0mNot found {path}")
 
+def generateLayout():
+    env = Environment(loader=FileSystemLoader('.'))
+    template = env.get_template('./layouts/application.html.j2')
+    data = {
+        "lang": "ja",
+        "title": "タイトル",
+    }
+
+    rendered = template.render(data)
+
+    print(str(rendered))
 
 def page_builder():
     pages = glob.glob("./pages/**", recursive=True)
@@ -162,5 +174,6 @@ def main():
     faviconGenerater(lastbuild, configuration["favicon_generater"]["path"])
     page_builder()
     javascriptCompile()
+    generateLayout()
     with open(".lastbuild", "w") as f:
         f.write(str(time.time()))

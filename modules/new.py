@@ -47,7 +47,8 @@ def main():
     os.makedirs("javascripts", exist_ok=True)
     os.makedirs("static", exist_ok=True)
     os.makedirs("pages", exist_ok=True)
-    os.makedirs("layout", exist_ok=True)
+    os.makedirs("layouts", exist_ok=True)
+    os.makedirs("components", exist_ok=True)
     configuration = {
         "version": "0.0.1",
         "name": PROJECT_NAME,
