@@ -109,19 +109,34 @@ def render(name,data={}):
     template = env.get_template(f"./components/{name}.html.j2")
     return template.render(data)
 
-def generateLayout():
-    env = Environment(loader=FileSystemLoader('.'))
-    env.globals['render'] = render
-    template = env.get_template('./layouts/application.html.j2')
-    data = {
-        "lang": "ja",
-        "title": "タイトル",
-    }
+def loadPagesSetting():
+    try:
+        with open("./config/pages.json","r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        modules.message.error("\033[1mPages Setting Loader: \033[0m could not load ./config/pages.json")
+        return None
 
-    rendered = template.render(data)
-    print(str(rendered))
+def makeCustomPageSetting(pageName, settingsDict):
+    customSettingKeyNames = [
+        "lang",
+        "title",
+        "layout",
+    ]
+    settings = {}
+    for customSettingKeyName in customSettingKeyNames:
+        settings[customSettingKeyName] = settingsDict["default"][customSettingKeyName] 
+    
+    if pageName in settingsDict["pages"]:
+        for customSettingKeyName in customSettingKeyNames:
+            if customSettingKeyName in settingsDict["pages"][pageName] and customSettingKeyName != "layout":
+                settings[customSettingKeyName] = settingsDict["pages"][pageName][customSettingKeyName]
+            elif "layout" in settingsDict["pages"][pageName] and os.path.isfile(f"./layout/{settingsDict['pages'][pageName]['layout']}"):
+                settings["layout"] = settingsDict['pages'][pageName]['layout']
+    return settings
 
 def page_builder():
+    pagesSetting = loadPagesSetting()
     pages = glob.glob("./pages/**", recursive=True)
     markdown_extensions = [".md",".markdown"]
     html_extensions = [".html",".htm"]
@@ -134,11 +149,23 @@ def page_builder():
             with open(page,"r") as markdown_file:
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html","w") as parsed_html_file:
                     try:
-                        parsed_html_file.write(html_minify(md.convert(markdown_file.read())))
+                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
+                        pageSetting["yield"] =  md.convert(markdown_file.read())
+                        env = Environment(loader=FileSystemLoader('.'))
+                        env.globals['render'] = render
+                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
+                        rendered = template.render(pageSetting)
+                        parsed_html_file.write(html_minify(rendered))
                         modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
                         modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
-                        parsed_html_file.write(md.convert(markdown_file.read()))
+                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
+                        pageSetting["yield"] =  md.convert(markdown_file.read())
+                        env = Environment(loader=FileSystemLoader('.'))
+                        env.globals['render'] = render
+                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
+                        rendered = template.render(pageSetting)
+                        parsed_html_file.write(rendered)
         elif os.path.isfile(page) and os.path.splitext(page)[-1] in html_extensions:
             dirname, basename = os.path.split(page)
             dirname = dirname.replace("./pages","")
@@ -146,11 +173,24 @@ def page_builder():
             with open(page,"r") as html_file:
                 with open(f"./dist{dirname}/{basename}","w") as parsed_html:
                     try:
-                        parsed_html.write(html_minify(md.convert(html_file.read())))
+                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
+                        pageSetting["yield"] = html_file.read()
+                        env = Environment(loader=FileSystemLoader('.'))
+                        env.globals['render'] = render
+                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
+                        rendered = template.render(pageSetting)
+                        parsed_html.write(html_minify(rendered))
                         modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
                         modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
-                        parsed_html.write(md.convert(html_file.read()))
+                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
+                        pageSetting["yield"] = html_file.read()
+                        env = Environment(loader=FileSystemLoader('.'))
+                        env.globals['render'] = render
+                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
+                        rendered = template.render(pageSetting)
+                        parsed_html.write(rendered)
+                        modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
 
 def javascriptCompile():
     js_files = glob.glob("./javascripts/**",recursive=True)
@@ -180,6 +220,6 @@ def main():
     faviconGenerater(lastbuild, configuration["favicon_generater"]["path"])
     page_builder()
     javascriptCompile()
-    generateLayout()
+    # generateLayout()
     with open(".lastbuild", "w") as f:
         f.write(str(time.time()))
