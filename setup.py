@@ -3,7 +3,7 @@ with open('requirements.txt') as requirements_file:
     install_requirements = requirements_file.read().splitlines()
 setup(
     name="spiderlog",
-    version="0.0.1",
+    version="0.0.2",
     description="Static Site Generater",
     author="Lusaca",
     packages=find_packages(),

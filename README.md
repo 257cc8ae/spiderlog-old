@@ -37,3 +37,8 @@ spiderlog -v
 ## How to use
 
 ### Create a new SpiderLog project
+
+## About Markdown Parser
+In this project, we are using [Mistune](https://github.com/lepture/mistune) for markdown parse and custom it.
+Mistune's code is licensed under BSD.
+I'd like to take this opportunity to thank to [lepture](https://github.com/lepture) for building and maintenance.

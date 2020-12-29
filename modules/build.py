@@ -6,7 +6,7 @@ import sass
 import sys
 import time
 from PIL import Image
-import markdown
+import modules.spiderMark
 from css_html_js_minify import html_minify, js_minify, css_minify
 import modules.message
 from jinja2 import Template, Environment, FileSystemLoader
@@ -140,7 +140,6 @@ def page_builder():
     pages = glob.glob("./pages/**", recursive=True)
     markdown_extensions = [".md",".markdown"]
     html_extensions = [".html",".htm"]
-    md = markdown.Markdown()
     for page in pages:
         if os.path.isfile(page) and os.path.splitext(page)[-1] in markdown_extensions:
             dirname, basename = os.path.split(page)
@@ -150,7 +149,7 @@ def page_builder():
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html","w") as parsed_html_file:
                     try:
                         pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
-                        pageSetting["yield"] =  md.convert(markdown_file.read())
+                        pageSetting["yield"] =  modules.spiderMark.html(markdown_file.read())
                         env = Environment(loader=FileSystemLoader('.'))
                         env.globals['render'] = render
                         template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
@@ -160,7 +159,7 @@ def page_builder():
                     except SyntaxError:
                         modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
                         pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
-                        pageSetting["yield"] =  md.convert(markdown_file.read())
+                        pageSetting["yield"] =  modules.spiderMark.html(markdown_file.read())
                         env = Environment(loader=FileSystemLoader('.'))
                         env.globals['render'] = render
                         template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
