@@ -11,11 +11,13 @@ from css_html_js_minify import html_minify, js_minify, css_minify
 import modules.message
 from jinja2 import Template, Environment, FileSystemLoader
 
+
 def isFileNewer(lastbuild, path):
     if os.stat(path).st_mtime >= lastbuild:
         return True
     else:
         return False
+
 
 def compileStyleSheets(LASTBUILD, file_format):
     modules.message.message(f"Stylesheet files format = {file_format}")
@@ -103,30 +105,30 @@ def faviconGenerater(lastbuild, path):
         modules.message.warn(
             f"\033[1mfavicon generater: \033[0mNot found {path}")
 
-def render(name,data={}):
+
+def render(name, data={}):
     env = Environment(loader=FileSystemLoader('.'))
     env.globals['render'] = render
     template = env.get_template(f"./components/{name}.html.j2")
     return template.render(data)
 
+
 def loadPagesSetting():
     try:
-        with open("./config/pages.json","r") as f:
+        with open("./config/pages.json", "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        modules.message.error("\033[1mPages Setting Loader: \033[0m could not load ./config/pages.json")
+        modules.message.error(
+            "\033[1mPages Setting Loader: \033[0m could not load ./config/pages.json")
         return None
 
+
 def makeCustomPageSetting(pageName, settingsDict):
-    customSettingKeyNames = [
-        "lang",
-        "title",
-        "layout",
-    ]
+    customSettingKeyNames = list(settingsDict["default"].keys())
     settings = {}
     for customSettingKeyName in customSettingKeyNames:
-        settings[customSettingKeyName] = settingsDict["default"][customSettingKeyName] 
-    
+        settings[customSettingKeyName] = settingsDict["default"][customSettingKeyName]
+
     if pageName in settingsDict["pages"]:
         for customSettingKeyName in customSettingKeyNames:
             if customSettingKeyName in settingsDict["pages"][pageName] and customSettingKeyName != "layout":
@@ -135,73 +137,101 @@ def makeCustomPageSetting(pageName, settingsDict):
                 settings["layout"] = settingsDict['pages'][pageName]['layout']
     return settings
 
+
+def headBuilder(config):
+    config_keys = list(config.keys)
+    # issues:htmlを動的(for文など)を使って生成するコードに置換
+    html = f"""
+    <title>{config["title"]}</title>
+    <meta property=\"og:url\" content=\"{config["og:url"]}\" />
+    <meta property=\"og:title\" content=\"{config["og:title"]}\" />
+    <meta property=\"og:type\" content=\"{config["og:type"]}\">
+    <meta property=\"og:image\" content="{config["og:image"]}\" />
+    <meta name=\"twitter:card\" content=\"{config["twitter:card"]}\" />
+    <meta name=\"twitter:site\" content=\"{config["twitter:site"]}\" />
+    <meta property=\"og:site_name\" content=\"{config["og:site_name"]}\" />
+    <meta property=\"fb:app_id\" content=\"{config["fb:app_id"]}\" />
+    """
+    return html
+
+
 def page_builder():
     pagesSetting = loadPagesSetting()
     pages = glob.glob("./pages/**", recursive=True)
-    markdown_extensions = [".md",".markdown"]
-    html_extensions = [".html",".htm"]
+    markdown_extensions = [".md", ".markdown"]
+    html_extensions = [".html", ".htm"]
     for page in pages:
         if os.path.isfile(page) and os.path.splitext(page)[-1] in markdown_extensions:
             dirname, basename = os.path.split(page)
-            dirname = dirname.replace("./pages","")
-            os.makedirs(f"./dist{dirname}",exist_ok=True)
-            with open(page,"r") as markdown_file:
-                with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html","w") as parsed_html_file:
+            dirname = dirname.replace("./pages", "")
+            os.makedirs(f"./dist{dirname}", exist_ok=True)
+            with open(page, "r") as markdown_file:
+                with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html", "w") as parsed_html_file:
                     try:
-                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
-                        pageSetting["yield"] =  modules.spiderMark.html(markdown_file.read())
-                        env = Environment(loader=FileSystemLoader('.'))
-                        env.globals['render'] = render
-                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
-                        rendered = template.render(pageSetting)
                         parsed_html_file.write(html_minify(rendered))
-                        modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
+                        modules.message.success(
+                            f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
-                        modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
-                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
-                        pageSetting["yield"] =  modules.spiderMark.html(markdown_file.read())
+                        modules.message.warn(
+                            f"\033[1mpage builder: \033[0mhtml syntax error")
+                        pageSetting = makeCustomPageSetting(
+                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
+                        pageSetting["yield"] = modules.spiderMark.html(
+                            markdown_file.read())
                         env = Environment(loader=FileSystemLoader('.'))
                         env.globals['render'] = render
-                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
+                        template = env.get_template(
+                            f"./layouts/{pageSetting['layout']}.html.j2")
                         rendered = template.render(pageSetting)
                         parsed_html_file.write(rendered)
         elif os.path.isfile(page) and os.path.splitext(page)[-1] in html_extensions:
             dirname, basename = os.path.split(page)
-            dirname = dirname.replace("./pages","")
-            os.makedirs(f"./dist{dirname}",exist_ok=True)
-            with open(page,"r") as html_file:
-                with open(f"./dist{dirname}/{basename}","w") as parsed_html:
+            dirname = dirname.replace("./pages", "")
+            os.makedirs(f"./dist{dirname}", exist_ok=True)
+            with open(page, "r") as html_file:
+                with open(f"./dist{dirname}/{basename}", "w") as parsed_html:
                     try:
-                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
+                        pageSetting = makeCustomPageSetting(
+                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
                         pageSetting["yield"] = html_file.read()
                         env = Environment(loader=FileSystemLoader('.'))
                         env.globals['render'] = render
-                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
+                        template = env.get_template(
+                            f"./layouts/{pageSetting['layout']}.html.j2")
                         rendered = template.render(pageSetting)
                         parsed_html.write(html_minify(rendered))
-                        modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
+                        modules.message.success(
+                            f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
-                        modules.message.warn(f"\033[1mpage builder: \033[0mhtml syntax error")
-                        pageSetting = makeCustomPageSetting(f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}",pagesSetting)
+                        modules.message.warn(
+                            f"\033[1mpage builder: \033[0mhtml syntax error")
+                        pageSetting = makeCustomPageSetting(
+                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
                         pageSetting["yield"] = html_file.read()
                         env = Environment(loader=FileSystemLoader('.'))
                         env.globals['render'] = render
-                        template = env.get_template(f"./layouts/{pageSetting['layout']}.html.j2")
+                        template = env.get_template(
+                            f"./layouts/{pageSetting['layout']}.html.j2")
                         rendered = template.render(pageSetting)
                         parsed_html.write(rendered)
-                        modules.message.success(f"\033[1mpage builder:\033[0m Compiled {page}")
+                        modules.message.success(
+                            f"\033[1mpage builder:\033[0m Compiled {page}")
+
 
 def javascriptCompile():
-    js_files = glob.glob("./javascripts/**",recursive=True)
+    js_files = glob.glob("./javascripts/**", recursive=True)
     for js_file in js_files:
         if os.path.isfile(js_file) and os.path.splitext(js_file)[-1] == ".js":
             dirname, basename = os.path.split(js_file)
-            dirname = dirname.replace("./javascripts","")
-            os.makedirs(f"./dist/js{dirname}",exist_ok=True)
-            with open(js_file,"r") as javascript_file:
+            dirname = dirname.replace("./javascripts", "")
+            os.makedirs(f"./dist/js{dirname}", exist_ok=True)
+            with open(js_file, "r") as javascript_file:
                 with open(f"./dist/js{dirname}/{basename}", "w") as javascript_file_minified:
-                    javascript_file_minified.write(js_minify(javascript_file.read()))
-                    modules.message.success(f"\033[1mJavaScript Minify: \033[0mminified {js_file}")
+                    javascript_file_minified.write(
+                        js_minify(javascript_file.read()))
+                    modules.message.success(
+                        f"\033[1mJavaScript Minify: \033[0mminified {js_file}")
+
 
 def main():
     with open(".lastbuild", "r") as f:
