@@ -124,36 +124,50 @@ def loadPagesSetting():
 
 
 def makeCustomPageSetting(pageName, settingsDict):
-    customSettingKeyNames = list(settingsDict["default"].keys())
-    settings = {}
-    for customSettingKeyName in customSettingKeyNames:
-        settings[customSettingKeyName] = settingsDict["default"][customSettingKeyName]
-
-    if pageName in settingsDict["pages"]:
-        for customSettingKeyName in customSettingKeyNames:
-            if customSettingKeyName in settingsDict["pages"][pageName] and customSettingKeyName != "layout":
-                settings[customSettingKeyName] = settingsDict["pages"][pageName][customSettingKeyName]
-            elif "layout" in settingsDict["pages"][pageName] and os.path.isfile(f"./layout/{settingsDict['pages'][pageName]['layout']}"):
-                settings["layout"] = settingsDict['pages'][pageName]['layout']
+    if pageName in settingsDict:
+        settings = dict(**settingsDict["global"],**settingsDict["default"],**settingsDict[pageName])
+    else:
+        settings = dict(**settingsDict["global"],**settingsDict["default"])
+    if "title" in settingsDict["default"]:
+        settings["defaultPageTitle"] = settingsDict["default"]["title"]
+    else:
+        settings["defaultPageTitle"] = settingsDict["global"]["og:site_name"] 
     return settings
 
+def generateGATags(ga_id):
+    return f"<script src=\"https://www.googletagmanager.com/gtag/js?id={ga_id}\"></script><script>window.dataLayer = window.dataLayer || [];function gtag() {{{{dataLayer.push(arguments);}}}}gtag('js', new Date());gtag('config', '{ga_id}');</script>"
 
-def headBuilder(config):
-    config_keys = list(config.keys)
-    # issues:htmlを動的(for文など)
-    html = f"""
-    <title>{config["title"]}</title>
-    <meta property=\"og:url\" content=\"{config["og:url"]}\" />
-    <meta property=\"og:title\" content=\"{config["og:title"]}\" />
-    <meta property=\"og:type\" content=\"{config["og:type"]}\">
-    <meta property=\"og:image\" content="{config["og:image"]}\" />
-    <meta name=\"twitter:card\" content=\"{config["twitter:card"]}\" />
-    <meta name=\"twitter:site\" content=\"{config["twitter:site"]}\" />
-    <meta property=\"og:site_name\" content=\"{config["og:site_name"]}\" />
-    <meta property=\"fb:app_id\" content=\"{config["fb:app_id"]}\" />
-    """
+def headBuilder(config_dict):
+    html = ""
+    tagTypes = {
+        "meta_property": [
+            "og:url",
+            "title",
+            "og:type",
+            "og:image",
+            "og:site_name",
+            "fb:app_id",
+        ],
+        "meta_name": [
+            "twitter:card",
+            "twitter:site",
+        ],
+    }
+    for config_keyname in config_dict:
+        if config_keyname in tagTypes["meta_property"]:
+            html += f"<meta property=\"{config_keyname}\" content=\"{config_dict[config_keyname]}\" />"
+            if config_keyname == "title" and config_dict["defaultPageTitle"] != config_dict[config_keyname]:
+                html += f"<title>{config_dict['page_naming_rule'].format(config_dict[config_keyname])}</title>"
+            else:
+                html += f"<title>{config_dict['defaultPageTitle']}</title>"
+        elif config_keyname in tagTypes["meta_name"]:
+            html += f"<meta name=\"{config_keyname}\" content=\"{config_dict[config_keyname]}\" />"
+        elif config_keyname == "og:title":
+            html += f"<title>{config_dict[config_keyname]}</title>"
+        elif config_dict["google_analytics"] == True:
+            generateGATags(config_dict["google_analytics_id"]) 
+    
     return html
-
 
 def page_builder():
     pagesSetting = loadPagesSetting()
@@ -167,34 +181,24 @@ def page_builder():
             os.makedirs(f"./dist{dirname}", exist_ok=True)
             with open(page, "r") as markdown_file:
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html", "w") as parsed_html_file:
-                    try:
-                        modules.message.warn(
-                            f"\033[1mpage builder: \033[0mhtml syntax error")
-                        pageSetting = makeCustomPageSetting(
+                    pageSetting = makeCustomPageSetting(
                             f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
-                        pageSetting["yield"] = modules.spiderMark.html(
-                            markdown_file.read())
-                        env = Environment(loader=FileSystemLoader('.'))
-                        env.globals['render'] = render
-                        template = env.get_template(
-                            f"./layouts/{pageSetting['layout']}.html.j2")
-                        rendered = template.render(pageSetting)
+                    pageSetting["yield"] = modules.spiderMark.html(
+                        markdown_file.read())
+                    pageSetting["headBuilder"] = headBuilder(pageSetting)
+                    env = Environment(loader=FileSystemLoader('.'))
+                    env.globals['render'] = render
+                    template = env.get_template(
+                        f"./layouts/{pageSetting['layout']}.html.j2")
+                    rendered = template.render(pageSetting)
+                    try:
                         parsed_html_file.write(html_minify(rendered))
                         modules.message.success(
                             f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
+                        parsed_html_file.write(rendered)
                         modules.message.warn(
                             f"\033[1mpage builder: \033[0mhtml syntax error")
-                        pageSetting = makeCustomPageSetting(
-                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
-                        pageSetting["yield"] = modules.spiderMark.html(
-                            markdown_file.read())
-                        env = Environment(loader=FileSystemLoader('.'))
-                        env.globals['render'] = render
-                        template = env.get_template(
-                            f"./layouts/{pageSetting['layout']}.html.j2")
-                        rendered = template.render(pageSetting)
-                        parsed_html_file.write(rendered)
         elif os.path.isfile(page) and os.path.splitext(page)[-1] in html_extensions:
             dirname, basename = os.path.split(page)
             dirname = dirname.replace("./pages", "")
