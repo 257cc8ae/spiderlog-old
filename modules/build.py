@@ -181,6 +181,7 @@ def page_builder():
             os.makedirs(f"./dist{dirname}", exist_ok=True)
             with open(page, "r") as markdown_file:
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html", "w") as parsed_html_file:
+                    pageSetting = dict()
                     pageSetting = makeCustomPageSetting(
                             f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
                     pageSetting["yield"] = modules.spiderMark.html(
@@ -205,32 +206,24 @@ def page_builder():
             os.makedirs(f"./dist{dirname}", exist_ok=True)
             with open(page, "r") as html_file:
                 with open(f"./dist{dirname}/{basename}", "w") as parsed_html:
-                    try:
-                        pageSetting = makeCustomPageSetting(
+                    pageSetting = dict()
+                    pageSetting = makeCustomPageSetting(
                             f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
-                        pageSetting["yield"] = html_file.read()
-                        env = Environment(loader=FileSystemLoader('.'))
-                        env.globals['render'] = render
-                        template = env.get_template(
-                            f"./layouts/{pageSetting['layout']}.html.j2")
-                        rendered = template.render(pageSetting)
+                    pageSetting["yield"] = html_file.read()
+                    pageSetting["headBuilder"] = headBuilder(pageSetting)
+                    env = Environment(loader=FileSystemLoader('.'))
+                    env.globals['render'] = render
+                    template = env.get_template(
+                        f"./layouts/{pageSetting['layout']}.html.j2")
+                    rendered = template.render(pageSetting)
+                    try:
                         parsed_html.write(html_minify(rendered))
                         modules.message.success(
                             f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
                         modules.message.warn(
                             f"\033[1mpage builder: \033[0mhtml syntax error")
-                        pageSetting = makeCustomPageSetting(
-                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
-                        pageSetting["yield"] = html_file.read()
-                        env = Environment(loader=FileSystemLoader('.'))
-                        env.globals['render'] = render
-                        template = env.get_template(
-                            f"./layouts/{pageSetting['layout']}.html.j2")
-                        rendered = template.render(pageSetting)
                         parsed_html.write(rendered)
-                        modules.message.success(
-                            f"\033[1mpage builder:\033[0m Compiled {page}")
 
 
 def javascriptCompile():
