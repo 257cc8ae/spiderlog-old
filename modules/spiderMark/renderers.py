@@ -176,7 +176,7 @@ class HTMLRenderer(BaseRenderer):
         return html
 
     def paragraph(self, text):
-        return '<p>' + text + '</p>\n'
+        return f"<p>{text}</p>\n"
 
     def heading(self, text, level):
         tag = 'h' + str(level)
@@ -192,22 +192,23 @@ class HTMLRenderer(BaseRenderer):
         return text
 
     def block_code(self, code, info=None):
-        html = '<pre><code'
         if info is not None:
             info = info.strip()
         if info:
             lang = info.split(None, 1)[0]
             lang = escape_html(lang)
-            html += ' class="language-' + lang + '"'
-        return html + '>' + escape(code) + '</code></pre>\n'
+            syntaxLanguage = f" class=\"language-{lang}\""
+        else:
+            syntaxLanguage = ""
+        return f"<pre><code{syntaxLanguage}>{escape(code)}</code></pre>\n"
 
     def block_quote(self, text):
-        return '<blockquote>\n' + text + '</blockquote>\n'
+        return f"<blockquote>{text}</blockquote>\n"
 
     def block_html(self, html):
         if not self._escape:
             return html + '\n'
-        return '<p>' + escape(html) + '</p>\n'
+        return f"<p>{escape(html)}</p>\n"
 
     def block_error(self, html):
         return f"<div class=\"error\">{html}</div>\n"

@@ -140,7 +140,7 @@ def makeCustomPageSetting(pageName, settingsDict):
 
 def headBuilder(config):
     config_keys = list(config.keys)
-    # issues:htmlを動的(for文など)を使って生成するコードに置換
+    # issues:htmlを動的(for文など)
     html = f"""
     <title>{config["title"]}</title>
     <meta property=\"og:url\" content=\"{config["og:url"]}\" />
@@ -168,6 +168,17 @@ def page_builder():
             with open(page, "r") as markdown_file:
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html", "w") as parsed_html_file:
                     try:
+                        modules.message.warn(
+                            f"\033[1mpage builder: \033[0mhtml syntax error")
+                        pageSetting = makeCustomPageSetting(
+                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
+                        pageSetting["yield"] = modules.spiderMark.html(
+                            markdown_file.read())
+                        env = Environment(loader=FileSystemLoader('.'))
+                        env.globals['render'] = render
+                        template = env.get_template(
+                            f"./layouts/{pageSetting['layout']}.html.j2")
+                        rendered = template.render(pageSetting)
                         parsed_html_file.write(html_minify(rendered))
                         modules.message.success(
                             f"\033[1mpage builder:\033[0m Compiled {page}")
