@@ -1,3 +1,3 @@
 def returnVersion():
-    version = "0.0.1 Alpha"
+    version = "0.0.1"
     return version

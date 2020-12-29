@@ -1,5 +1,13 @@
 from .scanner import escape, escape_html
+import re
+import os
 
+def isAssetsImagesPath(src):
+    path_re = re.compile(r"\/images\/.*")
+    if path_re.match(src):
+        return True
+    else:
+        return False
 
 class BaseRenderer(object):
     NAME = 'base'
@@ -140,19 +148,24 @@ class HTMLRenderer(BaseRenderer):
     def image(self, src, alt="", title=None):
         src = self._safe_url(src)
         alt = escape_html(alt)
-        s = f"<img src=\"{src}\" alt=\"{alt}\" loading=\"lazy\""
+        attributes = ""
+        images_format = [".bmp", ".jpg", ".jpeg", ".png"]
         if title:
-            s += f" title={escape_html(title)}"
-        return s + ' />'
+            attributes += f" title=\"{escape_html(title)}\""
+        if isAssetsImagesPath(src) and os.path.splitext(src)[-1] in images_format:
+            s = f"<picture><source type=\"image/webp\" srcset=\"{src}.webp\"><img src=\"{src}\" loading=\"lazy\" alt=\"{alt}\" {attributes}></picture>"
+        else:
+            s = f"<img src=\"{src}\" alt=\"{alt}\"{attributes} />"
+        return s
 
     def emphasis(self, text):
         return f"<em>{text}</em>"
 
     def strong(self, text):
-        return '<strong>' + text + '</strong>'
+        return f"<strong>{text}</strong>"
 
     def codespan(self, text):
-        return '<code>' + escape(text) + '</code>'
+        return f"<code>{escape(text)}</code>"
 
     def linebreak(self):
         return '<br />\n'
@@ -167,7 +180,7 @@ class HTMLRenderer(BaseRenderer):
 
     def heading(self, text, level):
         tag = 'h' + str(level)
-        return '<' + tag + '>' + text + '</' + tag + '>\n'
+        return f"<{tag}>{text}</{tag}>"
 
     def newline(self):
         return ''
