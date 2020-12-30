@@ -3,45 +3,48 @@ import time
 import os
 import sys
 import json
+import re
 import modules.spiderMark
 import modules.message
 import sass
+import mimetypes
 
-def loadSLConfigFile():
-    with open("sl.json", "r") as f:
-        return json.load(f)
+def loadSpiderLogConfigFile():
+    try:
+        with open("sl.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        modules.message.error("This is not the SpiderLog directory.")
+        sys.exit()
+
+def isBinaryOrText(mimetype):
+    mimetype_type = mimetype.split("/")[0]
+    if  mimetype_type == "text" or mimetype_type == "application" or mimetype == "image/svg+xml":
+        return True
+    else:
+        return False
 
 class SpiderServer(BaseHTTPRequestHandler):
     def do_GET(self):
-        config = loadSLConfigFile()
+        config = loadSpiderLogConfigFile()
         path = self.path
-        if os.path.splitext(path)[-1] == ".css":
+        path_ext = os.path.splitext(path)[-1]
+        content_type = mimetypes.guess_type(path)[0]
+        request_status = 200
+        response_body = ""
+        # バイナリファイルか条件分岐後テキストファイルはそのまま返す
+        if path_ext == ".css":
+            path = path[:-3] + config["stylesheets_file_format"]
             try:
-                with open(f"./assets/stylesheets/{os.path.splitext(os.path.basename(path))[0]}.{config['stylesheets_file_format']}", "r") as f:
-                    self.send_response(200)
-                    self.send_header("Content-type", "text/css")
-                    self.end_headers()
-                    self.wfile.write(bytes(sass.compile(string=f.read(), output_style='expanded'), "utf-8"))                    
+                with open(f".{path}", "r") as f:
+                    response_body = sass.compile(
+                        string=f.read(), output_style='expanded')
             except FileNotFoundError:
-                self.send_response(404)
-                self.send_header("Content-type", "text/css")
-                self.end_headers()
-            except sass.CompileError:
-                self.send_response(200)
-                self.send_header("Content-type", "text/css")
-                self.end_headers()
-                self.wfile.write(bytes(f.read(), "utf-8"))   
-        elif os.path.splitext(path)[-1] == ".js":
-            try:
-                with open(f"./javascripts/{os.path.basename(path)}", "r") as f:
-                    self.send_response(200)
-                    self.send_header("Content-type", "text/javascript")
-                    self.end_headers()
-                    self.wfile.write(bytes(f.read(), "utf-8"))   
-            except FileNotFoundError:
-                self.send_response(404)
-                self.send_header("Content-type", "text/javascript")
-                self.end_headers()
+                request_status = 404
+        self.send_response(request_status)
+        self.send_header("Content-type", content_type)
+        self.end_headers()
+        self.wfile.write(bytes(response_body, "utf-8"))
 
 def main():
     if os.path.isfile("sl.json"):

@@ -47,14 +47,14 @@ def main():
             modules.message.message(
                 "Please check how to install git. https://git-scm.com/download")
     new_directories = [
-        "assets/stylesheets",
-        "assets/images",
+        "stylesheets",
+        "images",
         "javascripts",
         "static",
         "pages",
         "layouts",
         "components",
-        "config/pages",
+        "config",
     ]
     for new_directory in new_directories:
         os.makedirs(new_directory, exist_ok=True)

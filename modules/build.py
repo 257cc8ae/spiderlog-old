@@ -22,11 +22,11 @@ def isFileNewer(lastbuild, path):
 
 def compileStyleSheets(LASTBUILD, file_format):
     modules.message.message(f"Stylesheet files format = {file_format}")
-    stylesheet_files = glob.glob("./assets/stylesheets/**", recursive=True)
+    stylesheet_files = glob.glob("./stylesheets/**", recursive=True)
     for stylesheet_file in stylesheet_files:
         if os.path.splitext(stylesheet_file)[-1] == f".{file_format}":
             new_css_file_path = stylesheet_file.replace(
-                "./assets/stylesheets", "")
+                "./stylesheets", "")
             if new_css_file_path.count("/") >= 2:
                 os.makedirs(
                     f"./dist/stylesheets{os.path.dirname(new_css_file_path)}", exist_ok=True)
@@ -52,7 +52,7 @@ def imageCompressor(lastbuild, width, quality):
             "\033[1mimage compressor:  \033[0mA quality value greater than 95 is not recommended.")
     os.makedirs("./dist/images", exist_ok=True)
     modules.message.message("Conversion images to webp format...")
-    images = glob.glob("./assets/images/**", recursive=True)
+    images = glob.glob("./images/**", recursive=True)
     images_format = [".bmp", ".jpg", ".jpeg", ".png"]
     for image_file in images:
         if os.path.splitext(image_file)[-1].lower() in images_format and isFileNewer(lastbuild, image_file):
@@ -240,9 +240,9 @@ def javascriptCompile():
         if os.path.isfile(js_file) and os.path.splitext(js_file)[-1] == ".js":
             dirname, basename = os.path.split(js_file)
             dirname = dirname.replace("./javascripts", "")
-            os.makedirs(f"./dist/js{dirname}", exist_ok=True)
+            os.makedirs(f"./dist/javascripts{dirname}", exist_ok=True)
             with open(js_file, "r") as javascript_file:
-                with open(f"./dist/js{dirname}/{basename}", "w") as javascript_file_minified:
+                with open(f"./dist/javascripts{dirname}/{basename}", "w") as javascript_file_minified:
                     javascript_file_minified.write(
                         js_minify(javascript_file.read()))
                     modules.message.success(
