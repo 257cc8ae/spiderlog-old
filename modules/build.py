@@ -5,6 +5,7 @@ import glob
 import sass
 import sys
 import time
+import re
 from PIL import Image
 import modules.spiderMark
 from css_html_js_minify import html_minify, js_minify, css_minify
@@ -124,14 +125,15 @@ def loadPagesSetting():
 
 
 def makeCustomPageSetting(pageName, settingsDict):
-    if pageName in settingsDict:
-        settings = dict(**settingsDict["global"],**settingsDict["default"],**settingsDict[pageName])
+    if pageName in settingsDict["pages"]:
+        settings = dict(dict(settingsDict["global"],**settingsDict["default"]),**settingsDict["pages"][pageName])
     else:
-        settings = dict(**settingsDict["global"],**settingsDict["default"])
+        settings = dict(settingsDict["global"],**settingsDict["default"])
     if "title" in settingsDict["default"]:
         settings["defaultPageTitle"] = settingsDict["default"]["title"]
     else:
         settings["defaultPageTitle"] = settingsDict["global"]["og:site_name"] 
+    settings["pageName"] = f"{pageName}.html"
     return settings
 
 def generateGATags(ga_id):
@@ -139,6 +141,7 @@ def generateGATags(ga_id):
 
 def headBuilder(config_dict):
     html = ""
+    re_url = re.compile(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+")
     tagTypes = {
         "meta_property": [
             "og:url",
@@ -158,7 +161,7 @@ def headBuilder(config_dict):
             html += f"<meta property=\"{config_keyname}\" content=\"{config_dict[config_keyname]}\" />"
             if config_keyname == "title" and config_dict["defaultPageTitle"] != config_dict[config_keyname]:
                 html += f"<title>{config_dict['page_naming_rule'].format(config_dict[config_keyname])}</title>"
-            else:
+            elif config_keyname == "title" and config_dict["defaultPageTitle"] == config_dict[config_keyname]:
                 html += f"<title>{config_dict['defaultPageTitle']}</title>"
         elif config_keyname in tagTypes["meta_name"]:
             html += f"<meta name=\"{config_keyname}\" content=\"{config_dict[config_keyname]}\" />"
@@ -166,12 +169,18 @@ def headBuilder(config_dict):
             html += f"<title>{config_dict[config_keyname]}</title>"
         elif config_dict["google_analytics"] == True:
             generateGATags(config_dict["google_analytics_id"]) 
-    
+    if "domain" in config_dict:
+        html += f"<meta property=\"{config_dict['domain']}/{config_dict['pageName']}\">"
+    if "og:image" in config_dict and re_url.match(config_dict["og:image"]):
+        html += f"<meta property=\"og:image\" content=\"{config_dict['og:image']}\">"
+    elif "og:image" in config_dict and "domain" in config_dict:
+        html += f"<meta property=\"og:image\" content=\"{config_dict['domain'] + config_dict['og:image']}\">"
+        
     return html
 
 def page_builder():
     pagesSetting = loadPagesSetting()
-    pages = glob.glob("./pages/**", recursive=True)
+    pages = sorted(glob.glob("./pages/**", recursive=True))
     markdown_extensions = [".md", ".markdown"]
     html_extensions = [".html", ".htm"]
     for page in pages:
@@ -181,7 +190,7 @@ def page_builder():
             os.makedirs(f"./dist{dirname}", exist_ok=True)
             with open(page, "r") as markdown_file:
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html", "w") as parsed_html_file:
-                    pageSetting = dict()
+                    pageSetting = {}
                     pageSetting = makeCustomPageSetting(
                             f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
                     pageSetting["yield"] = modules.spiderMark.html(
@@ -193,7 +202,7 @@ def page_builder():
                         f"./layouts/{pageSetting['layout']}.html.j2")
                     rendered = template.render(pageSetting)
                     try:
-                        parsed_html_file.write(html_minify(rendered))
+                        parsed_html_file.write(rendered)
                         modules.message.success(
                             f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:
@@ -206,7 +215,6 @@ def page_builder():
             os.makedirs(f"./dist{dirname}", exist_ok=True)
             with open(page, "r") as html_file:
                 with open(f"./dist{dirname}/{basename}", "w") as parsed_html:
-                    pageSetting = dict()
                     pageSetting = makeCustomPageSetting(
                             f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
                     pageSetting["yield"] = html_file.read()
@@ -217,7 +225,7 @@ def page_builder():
                         f"./layouts/{pageSetting['layout']}.html.j2")
                     rendered = template.render(pageSetting)
                     try:
-                        parsed_html.write(html_minify(rendered))
+                        parsed_html.write(rendered)
                         modules.message.success(
                             f"\033[1mpage builder:\033[0m Compiled {page}")
                     except SyntaxError:

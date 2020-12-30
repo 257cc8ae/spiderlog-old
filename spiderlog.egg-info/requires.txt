@@ -1,5 +1,4 @@
 Jinja2==2.11.2
-Markdown==3.3.3
 Pillow==7.0.0
 css-html-js-minify==2.5.5
 libsass==0.20.1

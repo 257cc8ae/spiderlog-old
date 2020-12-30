@@ -3,6 +3,7 @@ import modules.new
 import modules.message
 import modules.build
 import modules.version
+import modules.server
 
 def main():
     PROCESS_NAME: str = sys.argv[1]
@@ -10,6 +11,8 @@ def main():
         modules.new.main()
     elif PROCESS_NAME == "build":
         modules.build.main()
+    elif PROCESS_NAME == "server" or PROCESS_NAME == "s":
+        modules.server.main()
     elif PROCESS_NAME == "--version" or "-v":
         print(modules.version.returnVersion())
     else:
