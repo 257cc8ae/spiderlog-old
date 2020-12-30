@@ -32,19 +32,27 @@ class SpiderServer(BaseHTTPRequestHandler):
         content_type = mimetypes.guess_type(path)[0]
         request_status = 200
         response_body = ""
-        # バイナリファイルか条件分岐後テキストファイルはそのまま返す
-        if path_ext == ".css":
-            path = path[:-3] + config["stylesheets_file_format"]
-            try:
-                with open(f".{path}", "r") as f:
-                    response_body = sass.compile(
-                        string=f.read(), output_style='expanded')
-            except FileNotFoundError:
-                request_status = 404
-        self.send_response(request_status)
-        self.send_header("Content-type", content_type)
-        self.end_headers()
-        self.wfile.write(bytes(response_body, "utf-8"))
+        if isBinaryOrText(content_type):
+            if path_ext == ".css":
+                path = path[:-3] + config["stylesheets_file_format"]
+                try:
+                    with open(f".{path}", "r") as f:
+                        response_body = sass.compile(
+                            string=f.read(), output_style='expanded')
+                except FileNotFoundError:
+                    request_status = 404
+            self.send_response(request_status)
+            self.send_header("Content-type", content_type)
+            self.end_headers()
+            self.wfile.write(bytes(response_body, "utf-8"))
+        else:
+            print("fuck")
+            self.send_response(request_status)
+            self.send_header("Content-type", content_type)
+            self.end_headers()
+            with open("./static/favicon.png","rb") as f:
+                response_body = f.read()
+            self.wfile.write(response_body)
 
 def main():
     if os.path.isfile("sl.json"):
