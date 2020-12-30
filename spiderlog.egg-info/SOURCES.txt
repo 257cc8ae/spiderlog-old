@@ -1,8 +1,0 @@
-README.md
-setup.py
-spiderlog.egg-info/PKG-INFO
-spiderlog.egg-info/SOURCES.txt
-spiderlog.egg-info/dependency_links.txt
-spiderlog.egg-info/entry_points.txt
-spiderlog.egg-info/requires.txt
-spiderlog.egg-info/top_level.txt
