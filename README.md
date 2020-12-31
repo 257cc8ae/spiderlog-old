@@ -6,21 +6,14 @@ When you run this program, you need python runtime environment.
 
 See here how to install Python.
 
-=> [Download python](https://www.python.org/downloads/)
+=> 
 
-
-### If you are Mac OS and Linux user.
 Perhaps your computer need superuser to install this program.
 
 ```bash
-pip3 install -e .
+pip install spiderlog
 ```
-
-### If you are Windows user.
-
-```bash
-pip install -e .
-```
+If you are Mac OS or Linux user, maybe you have to be super user.
 
 ### Confirm installed SpiderLog
 
@@ -35,8 +28,15 @@ spiderlog -v
 ```
 
 ## How to use
-
+Here is a brief description of how to use SpiderLog.
 ### Create a new SpiderLog project
+``` bash
+spiderlog new <your project name>
+```
+
+
+
+
 
 ## About Markdown Parser
 In this project, we are using [Mistune](https://github.com/lepture/mistune) for markdown parse and custom it.
