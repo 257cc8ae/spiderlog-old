@@ -53,7 +53,7 @@ def imageCompressor(lastbuild, width, quality):
     os.makedirs("./dist/images", exist_ok=True)
     modules.message.message("Conversion images to webp format...")
     images = glob.glob("./images/**", recursive=True)
-    images_format = [".bmp", ".jpg", ".jpeg", ".png"]
+    images_format = [".bmp", ".jpg", ".jpeg", ".png",".gif"]
     for image_file in images:
         if os.path.splitext(image_file)[-1].lower() in images_format and isFileNewer(lastbuild, image_file):
             img = Image.open(image_file)
@@ -183,6 +183,7 @@ def page_builder():
     pages = sorted(glob.glob("./pages/**", recursive=True))
     markdown_extensions = [".md", ".markdown"]
     html_extensions = [".html", ".htm"]
+    # issue conflict filesはsorted()で先のもののみ処理するように変更
     for page in pages:
         if os.path.isfile(page) and os.path.splitext(page)[-1] in markdown_extensions:
             dirname, basename = os.path.split(page)
