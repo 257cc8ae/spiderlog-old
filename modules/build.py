@@ -53,7 +53,7 @@ def imageCompressor(lastbuild, width, quality):
     os.makedirs("./dist/images", exist_ok=True)
     modules.message.message("Conversion images to webp format...")
     images = glob.glob("./images/**", recursive=True)
-    images_format = [".bmp", ".jpg", ".jpeg", ".png",".gif"]
+    images_format = [".bmp", ".jpg", ".jpeg", ".png", ".gif"]
     for image_file in images:
         if os.path.splitext(image_file)[-1].lower() in images_format and isFileNewer(lastbuild, image_file):
             img = Image.open(image_file)
@@ -126,18 +126,21 @@ def loadPagesSetting():
 
 def makeCustomPageSetting(pageName, settingsDict):
     if pageName in settingsDict["pages"]:
-        settings = dict(dict(settingsDict["global"],**settingsDict["default"]),**settingsDict["pages"][pageName])
+        settings = dict(dict(
+            settingsDict["global"], **settingsDict["default"]), **settingsDict["pages"][pageName])
     else:
-        settings = dict(settingsDict["global"],**settingsDict["default"])
+        settings = dict(settingsDict["global"], **settingsDict["default"])
     if "title" in settingsDict["default"]:
         settings["defaultPageTitle"] = settingsDict["default"]["title"]
     else:
-        settings["defaultPageTitle"] = settingsDict["global"]["og:site_name"] 
+        settings["defaultPageTitle"] = settingsDict["global"]["og:site_name"]
     settings["pageName"] = f"{pageName}.html"
     return settings
 
+
 def generateGATags(ga_id):
     return f"<script src=\"https://www.googletagmanager.com/gtag/js?id={ga_id}\"></script><script>window.dataLayer = window.dataLayer || [];function gtag() {{{{dataLayer.push(arguments);}}}}gtag('js', new Date());gtag('config', '{ga_id}');</script>"
+
 
 def headBuilder(config_dict):
     html = ""
@@ -168,32 +171,34 @@ def headBuilder(config_dict):
         elif config_keyname == "og:title":
             html += f"<title>{config_dict[config_keyname]}</title>"
         elif config_dict["google_analytics"] == True:
-            generateGATags(config_dict["google_analytics_id"]) 
+            generateGATags(config_dict["google_analytics_id"])
     if "domain" in config_dict:
         html += f"<meta property=\"{config_dict['domain']}/{config_dict['pageName']}\">"
     if "og:image" in config_dict and re_url.match(config_dict["og:image"]):
         html += f"<meta property=\"og:image\" content=\"{config_dict['og:image']}\">"
     elif "og:image" in config_dict and "domain" in config_dict:
         html += f"<meta property=\"og:image\" content=\"{config_dict['domain'] + config_dict['og:image']}\">"
-        
+
     return html
+
 
 def page_builder():
     pagesSetting = loadPagesSetting()
     pages = sorted(glob.glob("./pages/**", recursive=True))
     markdown_extensions = [".md", ".markdown"]
     html_extensions = [".html", ".htm"]
-    # issue conflict filesはsorted()で先のもののみ処理するように変更
+    rendered_pages = []
     for page in pages:
-        if os.path.isfile(page) and os.path.splitext(page)[-1] in markdown_extensions:
-            dirname, basename = os.path.split(page)
-            dirname = dirname.replace("./pages", "")
-            os.makedirs(f"./dist{dirname}", exist_ok=True)
+        dirname, basename = os.path.split(page)
+        dirname = dirname.replace("./pages", "")
+        pageName = f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}"
+        pageSetting = {}
+        pageSetting = makeCustomPageSetting(pageName, pagesSetting)
+        os.makedirs(f"./dist{dirname}", exist_ok=True)
+        if not pageName in rendered_pages and os.path.isfile(page) and os.path.splitext(page)[-1] in markdown_extensions:
+            rendered_pages.append(pageName)
             with open(page, "r") as markdown_file:
                 with open(f"./dist{dirname}/{os.path.splitext(os.path.basename(page))[0]}.html", "w") as parsed_html_file:
-                    pageSetting = {}
-                    pageSetting = makeCustomPageSetting(
-                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
                     pageSetting["yield"] = modules.spiderMark.html(
                         markdown_file.read())
                     pageSetting["headBuilder"] = headBuilder(pageSetting)
@@ -210,14 +215,10 @@ def page_builder():
                         parsed_html_file.write(rendered)
                         modules.message.warn(
                             f"\033[1mpage builder: \033[0mhtml syntax error")
-        elif os.path.isfile(page) and os.path.splitext(page)[-1] in html_extensions:
-            dirname, basename = os.path.split(page)
-            dirname = dirname.replace("./pages", "")
-            os.makedirs(f"./dist{dirname}", exist_ok=True)
+        elif not pageName in rendered_pages and os.path.isfile(page) and os.path.splitext(page)[-1] in html_extensions:
+            rendered_pages.append(pageName)
             with open(page, "r") as html_file:
                 with open(f"./dist{dirname}/{basename}", "w") as parsed_html:
-                    pageSetting = makeCustomPageSetting(
-                            f"{dirname[1:]}/{os.path.splitext(os.path.basename(page))[0]}", pagesSetting)
                     pageSetting["yield"] = html_file.read()
                     pageSetting["headBuilder"] = headBuilder(pageSetting)
                     env = Environment(loader=FileSystemLoader('.'))
@@ -233,7 +234,8 @@ def page_builder():
                         modules.message.warn(
                             f"\033[1mpage builder: \033[0mhtml syntax error")
                         parsed_html.write(rendered)
-
+                
+            
 
 def javascriptCompile():
     js_files = glob.glob("./javascripts/**", recursive=True)
